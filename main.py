@@ -13,7 +13,7 @@ keyword_groups = {
 
 # API設定
 Entrez.email = "10311kaduken@gmail.com"  # メールアドレスを入力
-SLACK_WEBHOOK_URL = os.environ.get("SLACK_WEBHOOK_URL") # SlackのWebhook URLを入力
+SLACK_WEBHOOK_URL = "https://hooks.slack.com/services/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" # SlackのWebhook URLを入力
 
 def search_pubmed(keyword, max_results=2):
     handle = Entrez.esearch(db="pubmed", term=keyword, retmax=max_results, sort="date")
