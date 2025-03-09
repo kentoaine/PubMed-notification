@@ -16,7 +16,7 @@ Entrez.email = "10311kaduken@gmail.com"  # メールアドレスを入力
 SLACK_WEBHOOK_URL = SLACK_WEBHOOK_URL = os.environ.get("SLACK_WEBHOOK_URL") # SlackのWebhook URLを入力
 
 def search_pubmed(keyword, max_results=2):
-    handle = Entrez.esearch(db="pubmed", term=keyword, retmax=max_results, sort="date")
+    handle = Entrez.esearch(db="pubmed", term=keyword, retmax=max_results, sort="relevance")
     record = Entrez.read(handle)
     handle.close()
     return record["IdList"]
