@@ -5,9 +5,9 @@ from Bio import Entrez
 import time
 
 keyword_groups = {
-    "A": ["machine learning", "deep learning", "neural network"],
-    "B": ["genomics", "bioinformatics", "proteomics"],
-    "C": ["quantum computing", "nanotechnology", "robotics"]
+    "A": ["semi-nested PCR", "mitochondrial DNA", "amplification", "sequencing", "phylogenetics", "species identification", "genetic diversity", "haplotype"],
+    "B": ["bioinformatics", "sequence alignment", "phylogenetic tree", "population genetics", "comparative genomics", "haplotype network", "genome annotation"],
+    "C": ["Yamanaka factors", "rejuvenation", "epigenetic reprogramming", "iPS", "cellular senescence", "aging reversal", "transcription factor reprogramming", "epigenetic clocks","regenerative medicine"]
 }
 
 Entrez.email = "your_email@example.com"
