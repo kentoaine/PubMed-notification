@@ -2,7 +2,7 @@ name: Weekly PubMed Notification
 
 on:
   schedule:
-    - cron: "0 9 * * 1"  # 毎週月曜9時（UTC）
+    - cron: "30 0 * * 1"   # 毎週月曜9時（UTC）
   workflow_dispatch:     # 手動実行を許可
 
 jobs:
