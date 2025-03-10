@@ -5,9 +5,9 @@ from Bio import Entrez
 import time
 
 keyword_groups = {
-    "A": ["semi-nested PCR", "mitochondrial DNA", "amplification", "sequencing", "phylogenetics", "species identification", "genetic diversity", "haplotype"],
-    "B": ["bioinformatics", "sequence alignment", "phylogenetic tree", "population genetics", "comparative genomics", "haplotype network", "genome annotation"],
-    "C": ["Yamanaka factors", "rejuvenation", "epigenetic reprogramming", "iPS", "cellular senescence", "aging reversal", "transcription factor reprogramming", "epigenetic clocks","regenerative medicine"]
+    "A": ["machine learning", "deep learning", "neural network"],
+    "B": ["genomics", "bioinformatics", "proteomics"],
+    "C": ["quantum computing", "nanotechnology", "robotics"]
 }
 
 Entrez.email = "your_email@example.com"
@@ -56,40 +56,32 @@ def post_to_slack(webhook_url, message, thread_ts=None):
 
 def main():
     try:
-        # グループごとに論文を取得
-        group_papers = {group: [] for group in keyword_groups}
+        # 各グループから3つのキーワードを選択
         selected_keywords = {group: random.sample(keywords, 3) for group, keywords in keyword_groups.items()}
-        paper_metadata = []  # 論文とキーワード、グループ情報を保持
+        papers_with_metadata = []
 
-        # 各グループから2論文を取得
+        # 各グループごとに処理
         for group, keywords in selected_keywords.items():
-            group_pmids = []
+            group_papers = []
+            group_metadata = []
+            
+            # 3つのキーワードで検索
             for keyword in keywords:
                 pmids = search_pubmed(keyword, max_results=2)
                 if pmids:
                     papers = fetch_details(pmids)
-                    for paper in papers[:2]:  # 各キーワードから最大2論文
-                        paper_metadata.append({
+                    for paper in papers:
+                        group_metadata.append({
                             "paper": paper,
                             "group": group,
                             "keyword": keyword
                         })
-                time.sleep(1)  # API制限回避
-            if group_pmids:
-                papers = fetch_details(group_pmids)
-                group_papers[group] = papers[:2]  # グループごとに2論文に制限
+                time.sleep(1)
 
-        # 全論文を統合
-        all_papers = []
-        for group in group_papers:
-            all_papers.extend(group_papers[group])
-
-        # メタデータを使って論文を整理
-        papers_with_metadata = []
-        for group in keyword_groups:
-            # 各グループから2論文を選択
-            group_specific_papers = [meta for meta in paper_metadata if meta["group"] == group][:2]
-            papers_with_metadata.extend(group_specific_papers)
+            # グループからランダムに2論文を選択
+            if group_metadata:
+                selected_papers = random.sample(group_metadata, min(2, len(group_metadata)))
+                papers_with_metadata.extend(selected_papers)
 
         # Slackメッセージ作成
         if not papers_with_metadata:
