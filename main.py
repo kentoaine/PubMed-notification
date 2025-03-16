@@ -7,7 +7,7 @@ import time
 keyword_groups = {
     "A": ["semi-nested PCR", "mitochondrial DNA", "amplification", "sequencing", "phylogenetics", "species identification", "genetic diversity", "haplotype"],
     "B": ["bioinformatics", "sequence alignment", "phylogenetic tree", "population genetics", "comparative genomics", "haplotype network", "genome annotation"],
-    "C": ["Yamanaka factors", "rejuvenation", "epigenetic reprogramming", "iPS", "cellular senescence", "aging reversal", "transcription factor reprogramming", "epigenetic clocks","regenerative medicine"]
+    "C": ["Yamanaka factors", "rejuvenation", "epigenetic reprogramming", "iPS", "cellular senescence", "aging reversal", "transcription factor reprogramming", "epigenetic clocks", "regenerative medicine"]
 }
 
 Entrez.email = "10311kaduken@gmail.com"
@@ -15,14 +15,15 @@ SLACK_WEBHOOK_URL = os.environ.get("SLACK_WEBHOOK_URL")
 if not SLACK_WEBHOOK_URL:
     raise ValueError("SLACK_WEBHOOK_URL is not set in environment variables")
 
-def search_pubmed(keyword, max_results=2):
+def search_pubmed(term, max_results=2, processed_pmids=None):
     try:
-        handle = Entrez.esearch(db="pubmed", term=keyword, retmax=max_results, sort="relevance")
+        handle = Entrez.esearch(db="pubmed", term=term, retmax=max_results, sort="relevance")
         record = Entrez.read(handle)
         handle.close()
-        return record["IdList"]
+        pmids = [pmid for pmid in record["IdList"] if processed_pmids is None or pmid not in processed_pmids]
+        return pmids[:max_results]
     except Exception as e:
-        post_to_slack(SLACK_WEBHOOK_URL, f"PubMed search failed for '{keyword}': {str(e)}")
+        post_to_slack(SLACK_WEBHOOK_URL, f"PubMed search failed for '{term}': {str(e)}")
         return []
 
 def fetch_details(pmids):
@@ -56,49 +57,52 @@ def post_to_slack(webhook_url, message, thread_ts=None):
 
 def main():
     try:
+        # 処理済みPMIDを管理
+        processed_pmids = set()
+
         # 各グループから3つのキーワードを選択
-        selected_keywords = {group: random.sample(keywords, 3) for group, keywords in keyword_groups.items()}
+        selected_keywords = {}
+        for group, keywords in keyword_groups.items():
+            selected_keywords[group] = random.sample(keywords, 3)
+
         papers_with_metadata = []
 
         # 各グループごとに処理
         for group, keywords in selected_keywords.items():
-            group_papers = []
-            group_metadata = []
-            
-            # 3つのキーワードで検索
-            for keyword in keywords:
-                pmids = search_pubmed(keyword, max_results=2)
-                if pmids:
-                    papers = fetch_details(pmids)
-                    for paper in papers:
-                        group_metadata.append({
-                            "paper": paper,
-                            "group": group,
-                            "keyword": keyword
-                        })
-                time.sleep(1)
-
-            # グループからランダムに2論文を選択
-            if group_metadata:
-                selected_papers = random.sample(group_metadata, min(2, len(group_metadata)))
+            # キーワードをANDで結合
+            combined_term = " AND ".join(keywords)
+            pmids = search_pubmed(combined_term, max_results=6, processed_pmids=processed_pmids)
+            if pmids:
+                papers = fetch_details(pmids)
+                group_metadata = []
+                for paper in papers:
+                    group_metadata.append({
+                        "paper": paper,
+                        "group": group,
+                        "keywords": keywords  # グループ内で使用した3キーワードを保持
+                    })
+                    processed_pmids.add(paper["pmid"])
+                # グループから2論文を選択
+                selected_papers = group_metadata[:2]  # 最初の2つを選択（重複防止済み）
                 papers_with_metadata.extend(selected_papers)
+            time.sleep(1)
 
         # Slackメッセージ作成
         if not papers_with_metadata:
             slack_message = "No papers found this week."
             post_to_slack(SLACK_WEBHOOK_URL, slack_message)
         else:
-            thread_ts = post_to_slack(SLACK_WEBHOOK_URL, "This Week's Papers (up to 6 articles):")
+            thread_ts = post_to_slack(SLACK_WEBHOOK_URL, "This Week's Papers (6 articles):")
             for i, meta in enumerate(papers_with_metadata[:6], 1):
                 paper = meta["paper"]
                 group = meta["group"]
-                keyword = meta["keyword"]
+                keywords = ", ".join(meta["keywords"])
                 title = paper["title"]
                 abstract = paper["abstract"]
                 link = f"https://pubmed.ncbi.nlm.nih.gov/{paper['pmid']}/"
                 message = (
                     f"**{i}. {title}**\n"
-                    f"Group: {group}, Keyword: {keyword}\n"
+                    f"Group: {group}, Keywords: {keywords}\n"
                     f"Abstract: {abstract}\n"
                     f"Link: {link}"
                 )
