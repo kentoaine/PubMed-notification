@@ -10,7 +10,7 @@ keyword_groups = {
     "C": ["Yamanaka factors", "rejuvenation", "epigenetic reprogramming", "iPS", "cellular senescence", "aging reversal", "transcription factor reprogramming", "epigenetic clocks","regenerative medicine"]
 }
 
-Entrez.email = "your_email@example.com"
+Entrez.email = "10311kaduken@gmail.com"
 SLACK_WEBHOOK_URL = os.environ.get("SLACK_WEBHOOK_URL")
 if not SLACK_WEBHOOK_URL:
     raise ValueError("SLACK_WEBHOOK_URL is not set in environment variables")
