@@ -5,7 +5,6 @@ from Bio import Entrez
 import time
 import google.generativeai as genai
 from google.api_core import exceptions as google_exceptions
-import json  # JSONデコード用に追加
 
 # キーワードグループ
 keyword_groups = {
@@ -15,10 +14,9 @@ keyword_groups = {
 }
 
 # 環境設定
-Email = os.environ.get("EMAIL_ADDRESS")
-Entrez.email = Email
+Entrez.email = os.environ.get("EMAIL_ADDRESS")
 if not Entrez.email:
-    raise ValueError("ENTREZ_EMAIL is not set in environment variables")
+    raise ValueError("EMAIL_ADDRESS is not set in environment variables")
 
 SLACK_WEBHOOK_URL = os.environ.get("SLACK_WEBHOOK_URL")
 if not SLACK_WEBHOOK_URL:
@@ -75,16 +73,28 @@ def save_processed_pmids(pmids, filename="processed_pmids.txt"):
         for pmid in pmids:
             f.write(f"{pmid}\n")
 
-def search_pubmed(term, max_results=1, processed_pmids=None):  # max_resultsを1に変更
-    try:
-        handle = Entrez.esearch(db="pubmed", term=term, retmax=max_results, sort="relevance")
-        record = Entrez.read(handle)
-        handle.close()
-        pmids = [pmid for pmid in record["IdList"] if processed_pmids is None or pmid not in processed_pmids]
-        return pmids[:max_results]
-    except Exception as e:
-        post_to_slack(SLACK_WEBHOOK_URL, f"PubMed search failed for '{term}': {str(e)}")
-        return []
+def search_pubmed(term, max_results=1, processed_pmids=None, max_retries=3):
+    for attempt in range(max_retries):
+        try:
+            handle = Entrez.esearch(db="pubmed", term=term, retmax=max_results, sort="relevance")
+            record = Entrez.read(handle)
+            handle.close()
+            pmids = [pmid for pmid in record["IdList"] if processed_pmids is None or pmid not in processed_pmids]
+            return pmids[:max_results]
+        except Exception as e:
+            print(f"PubMed search failed for '{term}' on attempt {attempt + 1}: {str(e)}")
+            if attempt < max_retries - 1:
+                wait_time = 2 ** attempt
+                print(f"Retrying in {wait_time} seconds...")
+                time.sleep(wait_time)
+            else:
+                print(f"Max retries reached for PubMed search, skipping term: {term}")
+                # エラーをSlackに通知（失敗してもプロセスを中断しない）
+                try:
+                    post_to_slack(SLACK_WEBHOOK_URL, f"PubMed search failed for '{term}' after {max_retries} attempts: {str(e)}")
+                except Exception as slack_error:
+                    print(f"Failed to send PubMed search error to Slack: {str(slack_error)}")
+                return []
 
 def fetch_details(pmids):
     try:
@@ -99,7 +109,11 @@ def fetch_details(pmids):
             papers.append({"pmid": pmid, "title": title, "abstract": abstract})
         return papers
     except Exception as e:
-        post_to_slack(SLACK_WEBHOOK_URL, f"PubMed fetch failed for PMIDs {pmids}: {str(e)}")
+        print(f"PubMed fetch failed for PMIDs {pmids}: {str(e)}")
+        try:
+            post_to_slack(SLACK_WEBHOOK_URL, f"PubMed fetch failed for PMIDs {pmids}: {str(e)}")
+        except Exception as slack_error:
+            print(f"Failed to send PubMed fetch error to Slack: {str(slack_error)}")
         return []
 
 def post_to_slack(webhook_url, message, thread_ts=None):
@@ -117,17 +131,17 @@ def post_to_slack(webhook_url, message, thread_ts=None):
             return None
     except requests.exceptions.HTTPError as e:
         print(f"HTTP Error: {str(e)}, Response: {response.text}")
-        raise
+        raise  # 再スローして上位で処理
     except Exception as e:
         print(f"Slack notification failed: {str(e)}")
-        raise
+        raise  # 再スローして上位で処理
 
 def main():
     try:
         # 処理済みPMIDを読み込み
         processed_pmids = load_processed_pmids()
         new_pmids = set()
-        skip_translation = False  # 翻訳スキップフラグ
+        skip_translation = False
 
         # 各グループから3つのキーワードを選択
         selected_keywords = {}
@@ -141,6 +155,7 @@ def main():
             combined_term = " AND ".join(keywords)
             pmids = search_pubmed(combined_term, max_results=1, processed_pmids=processed_pmids)
             if not pmids:
+                print(f"No papers found for '{combined_term}' in Group {group}, skipping...")
                 try:
                     post_to_slack(SLACK_WEBHOOK_URL, f"No papers found for '{combined_term}' in Group {group}")
                 except Exception as e:
@@ -155,7 +170,7 @@ def main():
                     "keywords": keywords
                 })
                 new_pmids.add(paper["pmid"])
-            selected_papers = group_metadata[:1]  # 1論文のみ
+            selected_papers = group_metadata[:1]
             papers_with_metadata.extend(selected_papers)
             time.sleep(2)
 
@@ -171,13 +186,14 @@ def main():
             except Exception as e:
                 print(f"Failed to send Slack message for no papers: {str(e)}")
         else:
+            thread_ts = None
             try:
                 thread_ts = post_to_slack(SLACK_WEBHOOK_URL, "This Week's Papers (3 articles):")
             except Exception as e:
                 print(f"Failed to send initial Slack message: {str(e)}")
                 thread_ts = None
 
-            for i, meta in enumerate(papers_with_metadata[:3], 1):  # 3論文のみ
+            for i, meta in enumerate(papers_with_metadata[:3], 1):
                 paper = meta["paper"]
                 group = meta["group"]
                 keywords = ", ".join(meta["keywords"])
@@ -202,6 +218,8 @@ def main():
 
         # PMIDファイルをリポジトリにコミット
         if new_pmids:
+            os.system('git config --global user.email "github-actions@users.noreply.github.com"')
+            os.system('git config --global user.name "GitHub Actions"')
             os.system("git add processed_pmids.txt")
             os.system('git commit -m "Update processed PMIDs"')
             os.system("git push origin main || echo 'Git push failed, continuing...'")
@@ -229,8 +247,8 @@ def main():
             abstract = paper["abstract"]
             link = f"https://pubmed.ncbi.nlm.nih.gov/{paper['pmid']}/"
 
-            title_ja = title  # 翻訳をスキップ
-            abstract_ja = abstract  # 翻訳をスキップ
+            title_ja = title
+            abstract_ja = abstract
 
             message = (
                 f"**{i}. {title_ja}**\n"
