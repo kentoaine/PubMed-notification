@@ -15,7 +15,8 @@ keyword_groups = {
 }
 
 # 環境設定
-Entrez.email = os.environ.get("EMAIL_ADDRESS")
+Email = os.environ.get("EMAIL_ADDRESS")
+Entrez.email = Email
 if not Entrez.email:
     raise ValueError("ENTREZ_EMAIL is not set in environment variables")
 
