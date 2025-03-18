@@ -2,8 +2,9 @@ name: Weekly PubMed Notification
 
 on:
   schedule:
-    - cron: "0 22 * * 0"  # 毎週日曜22:00 UTC（JST月曜7:00）
-  workflow_dispatch:
+    - cron: "0 22 * * 0"  # 日曜22:00 UTC（月曜7:00 JST）
+    - cron: "0 22 * * 3"  # 水曜22:00 UTC（木曜7:00 JST）
+  workflow_dispatch:      # 手動実行も可能
 
 jobs:
   notify:
@@ -11,7 +12,7 @@ jobs:
     steps:
       - uses: actions/checkout@v3
         with:
-          token: ${{ secrets.GITHUB_TOKEN }}  # Git操作用トークン
+          token: ${{ secrets.PAT }}
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
@@ -19,7 +20,7 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install -r requirements.txt
+          pip install -r requirements.txt -v
       - name: Run script
         env:
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
