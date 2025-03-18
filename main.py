@@ -16,6 +16,9 @@ keyword_groups = {
 
 # 環境設定
 Entrez.email = os.environ.get("EMAIL_ADDRESS")
+if not Entrez.email:
+    raise ValueError("ENTREZ_EMAIL is not set in environment variables")
+
 SLACK_WEBHOOK_URL = os.environ.get("SLACK_WEBHOOK_URL")
 if not SLACK_WEBHOOK_URL:
     raise ValueError("SLACK_WEBHOOK_URL is not set in environment variables")
@@ -92,8 +95,6 @@ def fetch_details(pmids):
             pmid = article["MedlineCitation"]["PMID"]
             title = article["MedlineCitation"]["Article"]["ArticleTitle"]
             abstract = article["MedlineCitation"]["Article"].get("Abstract", {}).get("AbstractText", ["No abstract"])[0]
-            if len(abstract) > 500:
-                abstract = abstract[:500] + "... (see link for full text)"
             papers.append({"pmid": pmid, "title": title, "abstract": abstract})
         return papers
     except Exception as e:
