@@ -104,17 +104,17 @@ cd PubMed-notification
 1. GitHubリポジトリの「Settings」 > 「Secrets and variables」 > 「Actions」 > 「Secrets」に移動します。
 
 2. 以下のシークレットを追加します:
-- Name: EMAIL_ADDRESS
-- Value: あなたのメールアドレス
+- EMAIL_ADDRESS
 
-- Name: SLACK_WEBHOOK_URL
-- Value: SlackのWebhook URL
 
-- Name: GEMINI_API_KEY
-- Value: Gemini APIキー
+- SLACK_WEBHOOK_URL
 
-- Name: PAT
-- Value: GitHubのPersonal Access Token（repo権限が必要）
+
+- GEMINI_API_KEY
+
+
+- PAT
+
 
 3. 「Add secret」または「Update secret」をクリックして保存します。
 
