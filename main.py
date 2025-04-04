@@ -6,11 +6,28 @@ import time
 import google.generativeai as genai
 from google.api_core import exceptions as google_exceptions
 
-# キーワードグループ
 keyword_groups = {
-    "A": ["semi-nested PCR", "mitochondrial DNA", "amplification", "sequencing", "phylogenetics", "species identification", "genetic diversity", "haplotype","Sus scrofa"],
-    "B": ["bioinformatics", "sequence alignment", "phylogenetic tree", "population genetics", "comparative genomics", "haplotype network", "genome annotation"],
-    "C": ["Yamanaka factors", "rejuvenation", "epigenetic reprogramming", "iPS", "cellular senescence", "aging reversal", "transcription factor reprogramming", "epigenetic clocks", "regenerative medicine","sirtuin"]
+    "A": [
+        "semi-nested PCR", "mitochondrial DNA", "amplification", "sequencing",
+        "phylogenetics", "species identification", "genetic diversity",
+        "haplotype", "Sus scrofa",
+        "genome", "genomics", "phylogenetic analysis", "molecular evolution",
+        "whole genome sequencing", "genetic distance"
+    ],
+    "B": [
+        "neuroscience", "cognitive neuroscience", "brain imaging", "fMRI", "EEG",
+        "neural circuits", "synaptic plasticity", "neurogenetics", "neurodevelopment",
+        "brain connectivity", "functional connectivity", "brain mapping",
+        "prefrontal cortex", "hippocampus", "neural networks",
+        "consciousness", "awareness", "default mode network", "global workspace theory",
+        "neural correlates of consciousness", "attention", "metacognition",
+        "self-awareness"
+    ],
+    "C": [
+        "Yamanaka factors", "rejuvenation", "epigenetic reprogramming", "iPS",
+        "cellular senescence", "aging reversal", "transcription factor reprogramming",
+        "epigenetic clocks", "regenerative medicine", "sirtuin"
+    ]
 }
 
 # 環境設定
