@@ -8,27 +8,25 @@ from google.api_core import exceptions as google_exceptions
 
 keyword_groups = {
     "A": [
-        "semi-nested PCR", "mitochondrial DNA", "amplification", "sequencing",
-        "phylogenetics", "species identification", "genetic diversity",
-        "haplotype", "Sus scrofa",
-        "genome", "genomics", "phylogenetic analysis", "molecular evolution",
-        "whole genome sequencing", "genetic distance"
+        "ancient DNA", "semi-nested PCR", "mitochondrial DNA", "DNA extraction",
+        "next-generation sequencing", "phylogenetics", "species identification",
+        "genetic diversity", "haplotype", "fossil DNA",
+        "molecular evolution", "genetic distance", "paleogenomics",
+        "bone sample analysis", "DNA degradation"
     ],
     "B": [
-        "neuroscience", "cognitive neuroscience", "brain imaging", "fMRI", "EEG",
-        "neural circuits", "synaptic plasticity", "neurogenetics", "neurodevelopment",
-        "brain connectivity", "functional connectivity", "brain mapping",
-        "prefrontal cortex", "hippocampus", "neural networks",
-        "consciousness", "awareness", "default mode network", "global workspace theory",
-        "neural correlates of consciousness", "attention", "metacognition",
-        "self-awareness"
+        "developmental biology", "gastrulation", "self-organization", "organoids",
+        "deep learning", "morphogenesis", "synthetic embryo", "morphogen gradients",
+        "3D cell culture", "AI in biology", "computational modeling", "biophysical modeling",
+        "embryoid body", "pattern formation", "spatial gene expression"
     ],
     "C": [
-        "Yamanaka factors", "rejuvenation", "epigenetic reprogramming", "iPS",
-        "cellular senescence", "aging reversal", "transcription factor reprogramming",
-        "epigenetic clocks", "regenerative medicine", "sirtuin"
+        "casein plastic", "biopolymer", "protein-based material", "leather alternative",
+        "sustainable materials", "mechanical testing", "tensile strength", "biodegradable plastic",
+        "natural polymer", "galalith", "organic materials", "hardness test", "material properties"
     ]
 }
+
 
 # 環境設定
 Entrez.email = os.environ.get("EMAIL_ADDRESS")
